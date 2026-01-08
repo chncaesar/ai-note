@@ -15,7 +15,7 @@
     "commands": [
       {
         "command": "ai-note.helloWorld",
-        "title": "Hello World"
+        "title": "ai note"
       }
     ]
   },
