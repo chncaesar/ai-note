@@ -1,7 +1,7 @@
 {
   "name": "ai-note",
-  "displayName": "ai-note",
-  "description": "",
+  "displayName": "AI Note Assistant",
+  "description": "AI 笔记助手 - 自动收集和显示笔记中的待办事项",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.107.0"
@@ -9,15 +9,42 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "ai-note.helloWorld",
-        "title": "ai note"
+        "command": "ai-note.showPanel",
+        "title": "show note",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "ai-note.refresh",
+        "title": "刷新待办事项"
+      },
+      {
+        "command": "ai-note.clearAll",
+        "title": "清除所有待办事项"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "ai-note.showPanel",
+          "when": "true"
+        },
+        {
+          "command": "ai-note.refresh",
+          "when": "true"
+        },
+        {
+          "command": "ai-note.clearAll",
+          "when": "true"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
