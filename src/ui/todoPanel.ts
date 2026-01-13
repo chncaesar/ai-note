@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { TodoItem, TodoGroup, TodoStatus } from '../types/todo';
+import { TodoItem, TodoGroup, TodoStatus, TodoSource } from '../types/todo';
 import { StorageService } from '../services/storageService';
 
 export class TodoPanel {
@@ -193,6 +193,41 @@ export class TodoPanel {
 			opacity: 0.7;
 		}
 
+		.todo-item.semantic {
+			border-left-color: #9c27b0;
+		}
+
+		.semantic-badge {
+			background: #9c27b0;
+			color: white;
+			font-size: 9px;
+			padding: 1px 4px;
+			border-radius: 2px;
+			margin-left: 4px;
+		}
+
+		.confidence-badge {
+			font-size: 9px;
+			padding: 1px 4px;
+			border-radius: 2px;
+			margin-left: 4px;
+		}
+
+		.confidence-high {
+			background: #4CAF50;
+			color: white;
+		}
+
+		.confidence-medium {
+			background: #ff9800;
+			color: white;
+		}
+
+		.confidence-low {
+			background: #9e9e9e;
+			color: white;
+		}
+
 		.todo-content {
 			display: flex;
 			align-items: center;
@@ -369,9 +404,15 @@ export class TodoPanel {
 		}[todo.status];
 
 		const statusClass = todo.status === TodoStatus.InProgress ? 'in-progress' : todo.status;
+		const isSemanticTodo = todo.source === TodoSource.Semantic;
+		const semanticClass = isSemanticTodo ? 'semantic' : '';
+		const semanticBadge = isSemanticTodo ? '<span class="semantic-badge">AI</span>' : '';
+		const confidenceBadge = todo.confidence
+			? `<span class="confidence-badge confidence-${todo.confidence}">${todo.confidence}</span>`
+			: '';
 
 		return `
-			<li class="todo-item ${statusClass}" 
+			<li class="todo-item ${statusClass} ${semanticClass}"
 				data-file-path="${this._escapeHtml(todo.filePath)}"
 				data-line-number="${todo.lineNumber}">
 				<div class="todo-content">
@@ -379,6 +420,8 @@ export class TodoPanel {
 					<span class="todo-text ${todo.status === TodoStatus.Completed ? 'completed' : ''}">
 						${this._escapeHtml(todo.content)}
 					</span>
+					${semanticBadge}
+					${confidenceBadge}
 				</div>
 				${todo.filePath !== currentFile ? `
 					<div class="todo-meta">行 ${todo.lineNumber}</div>

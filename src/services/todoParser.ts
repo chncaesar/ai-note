@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TodoItem, TodoStatus } from '../types/todo';
+import { TodoItem, TodoStatus, TodoSource } from '../types/todo';
 
 export class TodoParser {
 	/**
@@ -126,7 +126,8 @@ export class TodoParser {
 			lineNumber,
 			createdAt: now,
 			updatedAt: now,
-			context
+			context,
+			source: TodoSource.Regex
 		};
 	}
 

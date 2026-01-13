@@ -27,6 +27,19 @@
       {
         "command": "ai-note.clearAll",
         "title": "清除所有待办事项"
+      },
+      {
+        "command": "ai-note.semanticScan",
+        "title": "AI: Scan for Semantic Todos",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "ai-note.configureApiKey",
+        "title": "AI: Configure OpenAI API Key"
+      },
+      {
+        "command": "ai-note.clearSemanticTodos",
+        "title": "AI: Clear Semantic Todos"
       }
     ],
     "menus": {
@@ -42,6 +55,25 @@
         {
           "command": "ai-note.clearAll",
           "when": "true"
+        },
+        {
+          "command": "ai-note.semanticScan",
+          "when": "editorLangId == markdown || editorLangId == plaintext"
+        },
+        {
+          "command": "ai-note.configureApiKey",
+          "when": "true"
+        },
+        {
+          "command": "ai-note.clearSemanticTodos",
+          "when": "editorLangId == markdown || editorLangId == plaintext"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "ai-note.semanticScan",
+          "when": "editorLangId == markdown || editorLangId == plaintext",
+          "group": "ai-note"
         }
       ]
     }

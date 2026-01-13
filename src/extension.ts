@@ -3,6 +3,8 @@ import { TodoPanel } from './ui/todoPanel';
 import { FileWatcher } from './services/fileWatcher';
 import { StorageService } from './services/storageService';
 import { TodoStatus } from './types/todo';
+import { LLMService, LLMError } from './services/llmService';
+import { SecretService } from './services/secretService';
 
 let fileWatcher: FileWatcher | undefined;
 
@@ -62,6 +64,123 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// 注册命令：语义扫描
+	const semanticScanCommand = vscode.commands.registerCommand(
+		'ai-note.semanticScan',
+		async () => {
+			const editor = vscode.window.activeTextEditor;
+			if (!editor) {
+				vscode.window.showWarningMessage('No active editor');
+				return;
+			}
+
+			const fileName = editor.document.fileName;
+			if (!fileName.endsWith('.md') && !fileName.endsWith('.txt')) {
+				vscode.window.showWarningMessage('Not a note file (.md or .txt)');
+				return;
+			}
+
+			// 检查 API 密钥
+			const hasKey = await SecretService.hasApiKey(context);
+			if (!hasKey) {
+				const configure = await vscode.window.showWarningMessage(
+					'OpenAI API key not configured',
+					'Configure Now'
+				);
+				if (configure === 'Configure Now') {
+					await SecretService.promptForApiKey(context);
+				}
+				return;
+			}
+
+			// 显示进度
+			await vscode.window.withProgress(
+				{
+					location: vscode.ProgressLocation.Notification,
+					title: 'Scanning for semantic todos...',
+					cancellable: false
+				},
+				async (progress) => {
+					try {
+						progress.report({ increment: 30 });
+
+						const content = editor.document.getText();
+						const filePath = editor.document.uri.fsPath;
+
+						const semanticTodos = await LLMService.semanticScan(
+							context,
+							filePath,
+							content
+						);
+
+						progress.report({ increment: 50 });
+
+						if (semanticTodos.length === 0) {
+							vscode.window.showInformationMessage(
+								'No implicit todos found in this document'
+							);
+							return;
+						}
+
+						// 合并待办事项
+						const { added, skipped } = await StorageService.mergeSemanticTodos(
+							context,
+							filePath,
+							semanticTodos
+						);
+
+						progress.report({ increment: 20 });
+
+						// 刷新面板
+						if (TodoPanel.currentPanel) {
+							TodoPanel.currentPanel.refresh();
+						}
+
+						vscode.window.showInformationMessage(
+							`Found ${semanticTodos.length} semantic todos: ${added} added, ${skipped} already exist`
+						);
+					} catch (error) {
+						handleLLMError(error);
+					}
+				}
+			);
+		}
+	);
+
+	// 注册命令：配置 API 密钥
+	const configureApiKeyCommand = vscode.commands.registerCommand(
+		'ai-note.configureApiKey',
+		async () => {
+			await SecretService.promptForApiKey(context);
+		}
+	);
+
+	// 注册命令：清除语义分析的待办事项
+	const clearSemanticCommand = vscode.commands.registerCommand(
+		'ai-note.clearSemanticTodos',
+		async () => {
+			const editor = vscode.window.activeTextEditor;
+			if (!editor) {
+				vscode.window.showWarningMessage('No active editor');
+				return;
+			}
+
+			const result = await vscode.window.showWarningMessage(
+				'Clear all semantic todos for this file?',
+				'Yes',
+				'No'
+			);
+
+			if (result === 'Yes') {
+				await StorageService.clearSemanticTodos(context, editor.document.uri.fsPath);
+				if (TodoPanel.currentPanel) {
+					TodoPanel.currentPanel.refresh();
+				}
+				vscode.window.showInformationMessage('Semantic todos cleared');
+			}
+		}
+	);
+
 	// 监听活动编辑器变化，自动显示面板
 	const onDidChangeActiveEditor = vscode.window.onDidChangeActiveTextEditor(editor => {
 		if (editor && (editor.document.fileName.endsWith('.md') || editor.document.fileName.endsWith('.txt'))) {
@@ -80,11 +199,50 @@ export function activate(context: vscode.ExtensionContext) {
 		refreshCommand,
 		updateStatusCommand,
 		clearCommand,
+		semanticScanCommand,
+		configureApiKeyCommand,
+		clearSemanticCommand,
 		onDidChangeActiveEditor
 	);
 
 	// 自动显示面板（可选）
 	// TodoPanel.createOrShow(context.extensionUri, context);
+}
+
+/**
+ * 处理 LLM 相关错误
+ */
+function handleLLMError(error: unknown): void {
+	if (error instanceof LLMError) {
+		switch (error.statusCode) {
+			case 401:
+				vscode.window.showErrorMessage(
+					'Invalid API key. Please reconfigure.',
+					'Configure'
+				).then(result => {
+					if (result === 'Configure') {
+						vscode.commands.executeCommand('ai-note.configureApiKey');
+					}
+				});
+				break;
+			case 429:
+				vscode.window.showErrorMessage(
+					'Rate limit exceeded. Please try again later.'
+				);
+				break;
+			case 408:
+				vscode.window.showErrorMessage(
+					'Request timeout. The document may be too large.'
+				);
+				break;
+			default:
+				vscode.window.showErrorMessage(`API Error: ${error.message}`);
+		}
+	} else {
+		vscode.window.showErrorMessage(
+			`Unexpected error: ${error instanceof Error ? error.message : 'Unknown'}`
+		);
+	}
 }
 
 export function deactivate() {
