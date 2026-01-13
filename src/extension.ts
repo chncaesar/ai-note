@@ -155,32 +155,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	);
 
-	// 注册命令：清除语义分析的待办事项
-	const clearSemanticCommand = vscode.commands.registerCommand(
-		'ai-note.clearSemanticTodos',
-		async () => {
-			const editor = vscode.window.activeTextEditor;
-			if (!editor) {
-				vscode.window.showWarningMessage('No active editor');
-				return;
-			}
-
-			const result = await vscode.window.showWarningMessage(
-				'Clear all semantic todos for this file?',
-				'Yes',
-				'No'
-			);
-
-			if (result === 'Yes') {
-				await StorageService.clearSemanticTodos(context, editor.document.uri.fsPath);
-				if (TodoPanel.currentPanel) {
-					TodoPanel.currentPanel.refresh();
-				}
-				vscode.window.showInformationMessage('Semantic todos cleared');
-			}
-		}
-	);
-
 	// 监听活动编辑器变化，自动显示面板
 	const onDidChangeActiveEditor = vscode.window.onDidChangeActiveTextEditor(editor => {
 		if (editor && (editor.document.fileName.endsWith('.md') || editor.document.fileName.endsWith('.txt'))) {
@@ -201,7 +175,6 @@ export function activate(context: vscode.ExtensionContext) {
 		clearCommand,
 		semanticScanCommand,
 		configureApiKeyCommand,
-		clearSemanticCommand,
 		onDidChangeActiveEditor
 	);
 

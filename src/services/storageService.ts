@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TodoItem, TodoGroup, TodoSource } from '../types/todo';
+import { TodoItem, TodoGroup } from '../types/todo';
 
 export class StorageService {
 	private static readonly STORAGE_KEY = 'ai-note.todos';
@@ -161,34 +161,6 @@ export class StorageService {
 		}
 
 		return { added, skipped };
-	}
-
-	/**
-	 * 获取指定文件的语义分析待办事项
-	 */
-	static getSemanticTodosForFile(
-		context: vscode.ExtensionContext,
-		filePath: string
-	): TodoItem[] {
-		const todos = this.getTodos(context);
-		return todos.filter(t =>
-			t.filePath === filePath &&
-			t.source === TodoSource.Semantic
-		);
-	}
-
-	/**
-	 * 清除指定文件的语义分析待办事项
-	 */
-	static async clearSemanticTodos(
-		context: vscode.ExtensionContext,
-		filePath: string
-	): Promise<void> {
-		const todos = this.getTodos(context);
-		const filtered = todos.filter(t =>
-			!(t.filePath === filePath && t.source === TodoSource.Semantic)
-		);
-		await this.saveTodos(context, filtered);
 	}
 
 	/**

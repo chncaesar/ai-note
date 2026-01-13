@@ -17,29 +17,25 @@
     "commands": [
       {
         "command": "ai-note.showPanel",
-        "title": "show note",
+        "title": "Note: Show Panel",
         "icon": "$(checklist)"
       },
       {
         "command": "ai-note.refresh",
-        "title": "刷新待办事项"
+        "title": "Note: Refresh Todos"
       },
       {
         "command": "ai-note.clearAll",
-        "title": "清除所有待办事项"
+        "title": "Note: Clear All Todos"
       },
       {
         "command": "ai-note.semanticScan",
-        "title": "AI: Scan for Semantic Todos",
+        "title": "Note: Semantic Scan",
         "icon": "$(sparkle)"
       },
       {
         "command": "ai-note.configureApiKey",
-        "title": "AI: Configure OpenAI API Key"
-      },
-      {
-        "command": "ai-note.clearSemanticTodos",
-        "title": "AI: Clear Semantic Todos"
+        "title": "Note: Configure API Key"
       }
     ],
     "menus": {
@@ -63,10 +59,6 @@
         {
           "command": "ai-note.configureApiKey",
           "when": "true"
-        },
-        {
-          "command": "ai-note.clearSemanticTodos",
-          "when": "editorLangId == markdown || editorLangId == plaintext"
         }
       ],
       "editor/context": [
